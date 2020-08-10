@@ -97,3 +97,17 @@ MyProject/
 ahoge
 ...
 ```
+
+
+## Additions
+We have a csv option `--output-csv <path-to-csv>` where you can specify a CSV file.
+For example, you can output a CSV of the predictions using:
+```bash
+deepdanbooru evaluate ./data/test/images/ --allow-folder --project-path deepdanbooru-v3-20200101-sgd-e30 --output-csv ./data/test/predictions/predictions.csv
+```
+
+#### Reinstall
+To force a reinstall after changing this then use
+```bash
+pip install --upgrade --no-deps --force-reinstall .
+```

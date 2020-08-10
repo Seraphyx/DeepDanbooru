@@ -80,8 +80,9 @@ def grad_cam(project_path, target_path, output_path, threshold):
 @click.option('--allow-folder', default=False, is_flag=True, help='If this option is enabled, TARGET_PATHS can be folder path and all images (using --folder-filters) in that folder is estimated recursively. If there are file and folder which has same name, the file is skipped and only folder is used.')
 @click.option('--folder-filters', default='*.[Pp][Nn][Gg],*.[Jj][Pp][Gg],*.[Jj][Pp][Ee][Gg],*.[Gg][Ii][Ff]', help='Glob pattern for searching image files in folder. You can specify multiple patterns by separating comma. This is used when --allow-folder is enabled. Default:*.[Pp][Nn][Gg],*.[Jj][Pp][Gg],*.[Jj][Pp][Ee][Gg],*.[Gg][Ii][Ff]')
 @click.option('--verbose', default=False, is_flag=True)
-def evaluate(target_paths, project_path, model_path, tags_path, threshold, allow_gpu, compile_model, allow_folder, folder_filters, verbose):
-    dd.commands.evaluate(target_paths, project_path, model_path, tags_path, threshold, allow_gpu, compile_model, allow_folder, folder_filters, verbose)
+@click.option('--output-csv', type=click.Path(exists=False, resolve_path=True, file_okay=True, dir_okay=False), default=None)
+def evaluate(target_paths, project_path, model_path, tags_path, threshold, allow_gpu, compile_model, allow_folder, folder_filters, verbose, output_csv):
+    dd.commands.evaluate(target_paths, project_path, model_path, tags_path, threshold, allow_gpu, compile_model, allow_folder, folder_filters, verbose, output_csv)
 
 
 if __name__ == '__main__':

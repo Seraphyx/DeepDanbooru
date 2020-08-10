@@ -1,5 +1,6 @@
 import os
 from typing import Any, Iterable, List, Tuple, Union
+import csv
 
 import six
 import tensorflow as tf
@@ -31,7 +32,7 @@ def evaluate_image(
             yield tag, result_dict[tag]
 
 
-def evaluate(target_paths, project_path, model_path, tags_path, threshold, allow_gpu, compile_model, allow_folder, folder_filters, verbose):
+def evaluate(target_paths, project_path, model_path, tags_path, threshold, allow_gpu, compile_model, allow_folder, folder_filters, verbose, output_csv):
     if not allow_gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
@@ -69,9 +70,18 @@ def evaluate(target_paths, project_path, model_path, tags_path, threshold, allow
             print(f'Loading tags from project {project_path} ...')
         tags = dd.project.load_tags_from_project(project_path)
 
-    for image_path in target_image_paths:
-        print(f'Tags of {image_path}:')
-        for tag, score in evaluate_image(image_path, model, tags, threshold):
-            print(f'({score:05.3f}) {tag}')
+    if output_csv:
+        with open(output_csv, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter='\t', quotechar='"', quoting=csv.QUOTE_ALL)
+            writer.writerow(["img_path", "tag", "score"])
+            for image_path in target_image_paths:
+                print(f'Tags of {image_path}:')
+                for tag, score in evaluate_image(image_path, model, tags, threshold):
+                    writer.writerow([image_path, tag, score])
+    else:
+        for image_path in target_image_paths:
+            print(f'Tags of {image_path}:')
+            for tag, score in evaluate_image(image_path, model, tags, threshold):
+                print(f'({score:05.3f}) {tag}')
 
         print()
