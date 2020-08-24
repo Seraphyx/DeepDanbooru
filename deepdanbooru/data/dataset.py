@@ -1,6 +1,8 @@
 import os
 import sqlite3
 import glob
+import pandas as pd
+import json
 
 
 def load_tags(tags_path):
@@ -106,3 +108,40 @@ def load_image_records_raw(sqlite_path, minimum_tag_count, image_folder_path=Non
     connection.close()
 
     return image_records
+
+
+def read_metadata(file_path):
+    lines = {}
+    with open(file_path, 'r', encoding='utf-8') as file:
+        line = file.readline()
+        while line:
+            line = json.loads(file.readline())
+            lines[line['id']] = line
+    return lines
+
+
+def read_metadata_dict(file_path, top_n=None, filter_attributes=None, filter_tag=None):
+    data = dict()
+    with open(file_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            l = json.loads(line)
+            if filter_attributes:
+                l = {k: l.get(k, None) for k in filter_attributes}
+                l['tags'] = [t['name'] for t in l['tags']]
+
+            if filter_tag:
+                if len([l for l in l['tags'] if l in filter_tag]):
+                    data[l['id']] = l
+            else:
+                data[l['id']] = l
+    return data
+
+
+def query_db(sqlite_path, query):
+    output_connection = sqlite3.connect(sqlite_path)
+
+    df = pd.read_sql_query(query, output_connection)
+
+    output_connection.close()
+
+    return df

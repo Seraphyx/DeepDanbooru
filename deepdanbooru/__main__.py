@@ -40,6 +40,21 @@ def download_tags(path, limit, minimum_post_count, overwrite):
     dd.commands.download_tags(path, limit, minimum_post_count, overwrite)
 
 
+@main.command('make-training-database-metadata')
+@click.argument('data_meta_glob', nargs=1, required=True)
+@click.argument('output_path', type=click.Path(exists=False, resolve_path=True, file_okay=True, dir_okay=False), nargs=1, required=True)
+@click.option('--image_path_glob', default=None, help='glob to path of images to filter out IDs', )
+@click.option('--start-id', default=1, help='Start id.', )
+@click.option('--end-id', default=sys.maxsize, help='End id.')
+@click.option('--use-deleted', help='Use deleted posts.', is_flag=True)
+@click.option('--chunk-size', default=5000000, help='Chunk size for internal processing.')
+@click.option('--overwrite', help='Overwrite tags if exists.', is_flag=True)
+@click.option('--vacuum', help='Execute VACUUM command after making database.', is_flag=True)
+def make_training_database_metadata(data_meta_glob, output_path, image_path_glob, start_id, end_id, use_deleted, chunk_size, overwrite, vacuum):
+    dd.commands.make_training_database_metadata_glob(data_meta_glob, output_path, image_path_glob, start_id, end_id,
+                                       use_deleted, chunk_size, overwrite, vacuum)
+
+
 @main.command('make-training-database')
 @click.argument('source_path', type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False), nargs=1, required=True)
 @click.argument('output_path', type=click.Path(exists=False, resolve_path=True, file_okay=True, dir_okay=False), nargs=1, required=True)

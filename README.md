@@ -138,6 +138,18 @@ Unzip into directory `data/danbooru/danbooru2019/metadata`:
 tar -xvf ./data/danbooru/danbooru2019/metadata.json.tar.xz -C ./data/danbooru/danbooru2019/metadata
 ```
 
+### 2. Make Training Database
+We use the metadata to create a training database. 
+The first argument is a `glob` so that you can search for patterns.
+For example, since we are training on 201:
+```bash
+deepdanbooru make-training-database-metadata \
+    "./data/danbooru/danbooru2019/metadata/*/2019*" \
+    "./data/sqlite/danbooru-2019.sqlite" \
+    --image_path_glob="/mnt/e/downloads/danbooru2019/original/*/*"
+```
+
+
 ### 2. Filter
 For easy viewing we filter the dataset using a jupyter notebook `notebooks/danbooru_eda.ipynb`
 We filtered using the tag `dragon_ball` to create the file `data/filters/include_dragon_ball.txt` which will be an 
@@ -158,3 +170,14 @@ Start a project directory
 ```bash
 deepdanbooru create-project project-small
 ```
+Modify `project.json` in the project folder. You should change `database_path` setting to your actual sqlite file path.
+
+In this notebook this is found in `sqlite_path_subset` but the absolute path of the folder.
+For example `G:/AI/shazam/DeepDanbooru/data/sqlite/danbooru-dev-subset.sqlite`
+
+Also, if you downloaded the image somewhere else on your system add to the `project.json` the attribute `image_folder_path` with the absolute path to the
+images with 3 digit has subfolder `"image_folder_path": "G:/AI/shazam/DeepDanbooru/data/danbooru/danbooru2019/original"`
+
+
+#### 5. Train Model
+Continue to modify `project.json` to the 
