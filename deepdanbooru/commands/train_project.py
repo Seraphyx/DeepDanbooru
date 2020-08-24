@@ -15,6 +15,7 @@ def train_project(project_path):
     width = project_context['image_width']
     height = project_context['image_height']
     database_path = project_context['database_path']
+    image_folder_path = project_context.get('image_folder_path')
     minimum_tag_count = project_context['minimum_tag_count']
     model_type = project_context['model']
     optimizer_type = project_context['optimizer']
@@ -32,7 +33,7 @@ def train_project(project_path):
 
     # disable PNG warning
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-    # tf.logging.set_verbosity(tf.logging.ERROR)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
     # tf.keras.backend.set_epsilon(1e-4)
     # tf.keras.mixed_precision.experimental.set_policy('infer_float32_vars')
@@ -60,6 +61,22 @@ def train_project(project_path):
         model_delegate = dd.model.resnet.create_resnet_custom_v2
     elif model_type == 'resnet_custom_v3':
         model_delegate = dd.model.resnet.create_resnet_custom_v3
+    elif model_type == 'efficientnet_b0':
+        model_delegate = dd.model.efficientnet.create_efficientnet_factory("EfficientNetB0")
+    elif model_type == 'efficientnet_b1':
+        model_delegate = dd.model.efficientnet.create_efficientnet_factory("EfficientNetB1")
+    elif model_type == 'efficientnet_b2':
+        model_delegate = dd.model.efficientnet.create_efficientnet_factory("EfficientNetB2")
+    elif model_type == 'efficientnet_b3':
+        model_delegate = dd.model.efficientnet.create_efficientnet_factory("EfficientNetB3")
+    elif model_type == 'efficientnet_b4':
+        model_delegate = dd.model.efficientnet.create_efficientnet_factory("EfficientNetB4")
+    elif model_type == 'efficientnet_b5':
+        model_delegate = dd.model.efficientnet.create_efficientnet_factory("EfficientNetB5")
+    elif model_type == 'efficientnet_b6':
+        model_delegate = dd.model.efficientnet.create_efficientnet_factory("EfficientNetB6")
+    elif model_type == 'efficientnet_b7':
+        model_delegate = dd.model.efficientnet.create_efficientnet_factory("EfficientNetB7")
     else:
         raise Exception(f'Not supported model : {model_type}')
 
@@ -80,8 +97,8 @@ def train_project(project_path):
                   metrics=[tf.keras.metrics.Precision(), tf.keras.metrics.Recall()])
 
     print(f'Loading database ... ')
-    image_records = dd.data.load_image_records(
-        database_path, minimum_tag_count)
+    image_records = dd.data.load_image_records_raw(
+        database_path, minimum_tag_count, image_folder_path)
 
     # Checkpoint variables
     used_epoch = tf.Variable(0, dtype=tf.int64)
@@ -117,6 +134,12 @@ def train_project(project_path):
     loss_count = 0
     used_sample_sum = 0
     last_time = time.time()
+
+    # Logs for Tensorboard
+    log_dir = os.path.join(project_path, 'logs')
+    summary_writer = tf.summary.create_file_writer(log_dir)
+    ts_start = datetime.datetime.now()
+    ts_minibatch_start = datetime.datetime.now()
 
     while int(used_epoch) < epoch_count:
         print(f'Shuffling samples (epoch {int(used_epoch)}) ... ')
@@ -179,8 +202,19 @@ def train_project(project_path):
                     eta_datetime = datetime.datetime.now() + datetime.timedelta(seconds=remain_seconds)
                     eta_datetime_string = eta_datetime.strftime(
                         '%Y-%m-%d %H:%M:%S')
+                    seconds_elapsed = (datetime.datetime.now() - ts_start).total_seconds()
+                    seconds_minibatch = (datetime.datetime.now() - ts_minibatch_start).total_seconds()
                     print(
                         f'Epoch[{int(used_epoch)}] Loss={average_loss:.6f}, P={step_metric_precision:.6f}, R={step_metric_recall:.6f}, F1={step_metric_f1_score:.6f}, Speed = {samples_per_seconds:.1f} samples/s, {progress:.2f} %, ETA = {eta_datetime_string}')
+
+                    # Tensorboard
+                    with summary_writer.as_default():
+                        tf.summary.scalar('loss', average_loss, step=used_minibatch)
+                        tf.summary.scalar('precision', step_metric_precision, step=used_minibatch)
+                        tf.summary.scalar('recall', step_metric_recall, step=used_minibatch)
+                        tf.summary.scalar('f1_score', step_metric_f1_score, step=used_minibatch)
+                        tf.summary.scalar('seconds_elapsed', seconds_elapsed, step=used_minibatch)
+                        tf.summary.scalar('seconds_minibatch', seconds_minibatch, step=used_minibatch)
 
                     # reset for next logging
                     model.reset_metrics()
@@ -188,6 +222,7 @@ def train_project(project_path):
                     loss_count = 0
                     used_sample_sum = 0
                     last_time = current_time
+                    ts_minibatch_start = datetime.datetime.now()
 
             offset.assign_add(slice_size)
             print('Saving checkpoint ... ')

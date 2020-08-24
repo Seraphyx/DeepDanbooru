@@ -5,7 +5,7 @@ import tensorflow as tf
 
 import deepdanbooru as dd
 
-from .dataset import load_image_records, load_tags
+from .dataset import load_image_records, load_image_records_raw, load_tags
 from .dataset_wrapper import DatasetWrapper
 
 

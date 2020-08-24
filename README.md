@@ -30,6 +30,10 @@ To install it with tensorflow, add `tensorflow` extra package.
 > pip install .[tensorflow]
 ```
 
+While developing use the editable option so that every change can be made available without reinstalling:
+```bash
+pip install -e .
+```
 
 ## Usage
 1. Prepare dataset. If you don't have, you can use [DanbooruDownloader](https://github.com/KichangKim/DanbooruDownloader) for download the dataset of [Danbooru](https://danbooru.donmai.us/). If you want to make your own dataset, see [Dataset Structure](#dataset-structure) section.
@@ -104,10 +108,53 @@ We have a csv option `--output-csv <path-to-csv>` where you can specify a CSV fi
 For example, you can output a CSV of the predictions using:
 ```bash
 deepdanbooru evaluate ./data/test/images/ --allow-folder --project-path deepdanbooru-v3-20200101-sgd-e30 --output-csv ./data/test/predictions/predictions.csv
+deepdanbooru evaluate ./data/tfod/images/ --allow-folder --project-path deepdanbooru-v3-20200101-sgd-e30 --output-csv ./data/tfod/predictions/predictions.csv
 ```
+
+## Download Specific Files Rsync
+Download using `rsync` specific files. We look at the metadata and filter ahead of time.
+
 
 #### Reinstall
 To force a reinstall after changing this then use
 ```bash
 pip install --upgrade --no-deps --force-reinstall .
+```
+
+
+## Train Small Dataset
+Let's start out with a small dataset to train. Let's call the project `project-small`.
+Let's download all images from **Danbooru2019** with tag `transparent_background`.
+
+### 1. Download Metadata
+We use `rsync` to download the metadata.
+```bash
+rsync --verbose \
+    rsync://78.46.86.149:873/danbooru2019/metadata.json.tar.xz \
+    ./data/danbooru/danbooru2019/
+```
+Unzip into directory `data/danbooru/danbooru2019/metadata`:
+```bash
+tar -xvf ./data/danbooru/danbooru2019/metadata.json.tar.xz -C ./data/danbooru/danbooru2019/metadata
+```
+
+### 2. Filter
+For easy viewing we filter the dataset using a jupyter notebook `notebooks/danbooru_eda.ipynb`
+We filtered using the tag `dragon_ball` to create the file `data/filters/include_dragon_ball.txt` which will be an 
+argument for `rsync`. 
+
+### 3. Download Images
+We use `rsync` to download a subset of images.
+
+```bash
+rsync --verbose --recursive --prune-empty-dirs \
+	--include-from='data/filters/include_dragon_ball.txt' \
+	--exclude='*' \
+	rsync://78.46.86.149:873/danbooru2019/ ./data/danbooru/danbooru2019/
+```
+
+### 4. Make a Project
+Start a project directory 
+```bash
+deepdanbooru create-project project-small
 ```

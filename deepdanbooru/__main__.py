@@ -4,7 +4,16 @@ import click
 
 import deepdanbooru as dd
 
-__version__ = '1.0.0'
+import tensorflow as tf
+
+# Devices
+physical_devices = [dev.name.replace("/physical_device:", "") for dev in tf.config.list_physical_devices()]
+gpu_devices = [dev for dev in physical_devices if dev[:3] == 'GPU']
+cpu_devices = [dev for dev in physical_devices if dev[:3] == 'CPU']
+print("===== GPU Devices are: {}".format(gpu_devices))
+print("===== CPU Devices are: {}".format(cpu_devices))
+
+__version__ = '1.1.0'
 
 
 @click.version_option(prog_name='DeepDanbooru', version=__version__)
