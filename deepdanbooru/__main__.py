@@ -8,10 +8,15 @@ import tensorflow as tf
 
 # Devices
 physical_devices = [dev.name.replace("/physical_device:", "") for dev in tf.config.list_physical_devices()]
-gpu_devices = [dev for dev in physical_devices if dev[:3] == 'GPU']
-cpu_devices = [dev for dev in physical_devices if dev[:3] == 'CPU']
-print("===== GPU Devices are: {}".format(gpu_devices))
-print("===== CPU Devices are: {}".format(cpu_devices))
+gpu_devices_names = [dev for dev in physical_devices if dev[:3] == 'GPU']
+cpu_devices_names = [dev for dev in physical_devices if dev[:3] == 'CPU']
+print("===== GPU Devices are: {}".format(gpu_devices_names))
+print("===== CPU Devices are: {}".format(cpu_devices_names))
+
+# Fixes CUDNN error on GPU
+gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+if len(gpu_devices):
+    config = tf.config.experimental.set_memory_growth(gpu_devices[0], True)
 
 __version__ = '1.1.0'
 
