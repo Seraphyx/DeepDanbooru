@@ -14,7 +14,8 @@ def download_category_tags(category, minimum_post_count, limit, page_size=1000, 
         'character': 4
     }
 
-    gold_only_tags = ['loli', 'shota', 'toddlercon']
+    # gold_only_tags = ['loli', 'shota', 'toddlercon']
+    gold_only_tags = []
 
     if category not in category_to_index:
         raise Exception(f'Not supported category : {category}')

@@ -150,10 +150,6 @@ deepdanbooru make-training-database-metadata \
 ```
 
 
-### 2. Filter
-For easy viewing we filter the dataset using a jupyter notebook `notebooks/danbooru_eda.ipynb`
-We filtered using the tag `dragon_ball` to create the file `data/filters/include_dragon_ball.txt` which will be an 
-argument for `rsync`. 
 
 ### 3. Download Images
 We use `rsync` to download a subset of images.
@@ -179,5 +175,23 @@ Also, if you downloaded the image somewhere else on your system add to the `proj
 images with 3 digit has subfolder `"image_folder_path": "G:/AI/shazam/DeepDanbooru/data/danbooru/danbooru2019/original"`
 
 
-#### 5. Train Model
-Continue to modify `project.json` to the 
+### 5. Download Tags
+We need to define the tags to be our labels. Sometimes you want to restrict the training to only tags with greater than 
+a set number of images `--minimum-post-count`. To download tags from Dabooru use:
+```bash
+deepdanbooru download-tags [your_project_folder]
+```
+
+
+### 6. Train Model
+Continue to modify `project.json` to the the training settings you want. To train the model simply run:
+```bash
+deepdanbooru train-project [your_project_folder]
+```
+
+
+# Miscellaneous
+### Filter Images by Tag
+For easy viewing we filter the dataset using a jupyter notebook `notebooks/danbooru_eda.ipynb`
+We filtered using the tag `dragon_ball` to create the file `data/filters/include_dragon_ball.txt` which will be an 
+argument for `rsync`. 
