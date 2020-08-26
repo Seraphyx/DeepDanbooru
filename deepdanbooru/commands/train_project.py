@@ -16,6 +16,10 @@ def train_project(project_path):
     height = project_context['image_height']
     database_path = project_context['database_path']
     image_folder_path = project_context.get('image_folder_path')
+    s3_input_bucket = project_context.get('s3_input_bucket')
+    s3_input_dir = project_context.get('s3_input_dir')
+    s3_output_bucket = project_context.get('s3_output_bucket')
+    s3_output_dir = project_context.get('s3_output_dir')
     minimum_tag_count = project_context['minimum_tag_count']
     model_type = project_context['model']
     optimizer_type = project_context['optimizer']
@@ -30,6 +34,10 @@ def train_project(project_path):
     rotation_range = project_context['rotation_range']
     scale_range = project_context['scale_range']
     shift_range = project_context['shift_range']
+
+    # Upload S3
+    cloud_storage_input = dd.io.CloudStorage(s3_bucket=s3_input_bucket, s3_key_prefix=s3_input_dir)
+    cloud_storage_output = dd.io.CloudStorage(s3_bucket=s3_output_bucket, s3_key_prefix=s3_output_dir)
 
     # disable PNG warning
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -116,9 +124,10 @@ def train_project(project_path):
         offset=offset,
         random_seed=random_seed)
 
+    checkpoint_path = os.path.join(project_path, 'checkpoints')
     manager = tf.train.CheckpointManager(
         checkpoint=checkpoint,
-        directory=os.path.join(project_path, 'checkpoints'),
+        directory=checkpoint_path,
         max_to_keep=3)
 
     if manager.latest_checkpoint:
@@ -237,6 +246,11 @@ def train_project(project_path):
             export_path = os.path.join(
                 project_path, f'model-{model_type}.h5.e{int(used_epoch)}')
             model.save(export_path, include_optimizer=False, save_format='h5')
+            cloud_storage_output.upload_file(local_file=export_path, s3_key=os.path.relpath(export_path, project_path))
+
+        # Upload to S3
+        cloud_storage_output.upload_dir(local_dir=checkpoint_path, s3_key="")
+        cloud_storage_output.upload_dir(local_dir=log_dir, s3_key="")
 
     print('Saving model ...')
     model_path = os.path.join(
@@ -245,7 +259,13 @@ def train_project(project_path):
     # tf.keras.experimental.export_saved_model throw exception now
     # see https://github.com/tensorflow/tensorflow/issues/27112
     model.save(model_path, include_optimizer=False)
+    cloud_storage_output.upload_file(local_file=model_path, s3_key=os.path.relpath(model_path, project_path))
 
     print('Training is complete.')
     print(
         f'used_epoch={int(used_epoch)}, used_minibatch={int(used_minibatch)}, used_sample={int(used_sample)}')
+
+    # Upload final project
+    cloud_storage_output.upload_file(local_file=model_path, s3_key=os.path.relpath(model_path, project_path))
+    cloud_storage_output.upload_file(local_file=os.path.join(project_path, "tags.txt"), s3_key="tags.txt")
+    cloud_storage_output.upload_file(local_file=os.path.join(project_path, "project.json"), s3_key="project.json")
